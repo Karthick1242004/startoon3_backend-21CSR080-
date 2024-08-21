@@ -17,8 +17,8 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   password: String,
-  loginCount: { type: Number, default: 0 },       // Track the number of logins
-  lastLogin: { type: Date, default: null }        // Track the most recent login date
+  loginCount: { type: Number, default: 0 },       
+  lastLogin: { type: Date, default: null }        
 }, { collection: 'users' });  
 
 const User = mongoose.model('User', userSchema);

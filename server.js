@@ -17,11 +17,17 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   password: String,
-  loginCount: { type: Number, default: 0 },       
-  lastLogin: { type: Date, default: null }        
-}, { collection: 'users' });  
+  loginCount: { type: Number, default: 0 },
+  lastLogin: { type: Date, default: null }
+}, { collection: 'users' });
+
+const adminSchema = new mongoose.Schema({
+  name: String,
+  password: String
+}, { collection: 'admins' });
 
 const User = mongoose.model('User', userSchema);
+const Admin = mongoose.model('Admin', adminSchema);
 
 app.post('/signup', async (req, res) => {
   const { name, email, password } = req.body;
@@ -42,12 +48,7 @@ app.post('/login', async (req, res) => {
       user.loginCount += 1;
       user.lastLogin = new Date();
       await user.save();
-
-      if (name === 'kamalesh' && password === 'kamalesh') {
-        res.status(200).json({ message: 'Login successful', redirectTo: '/admin' });
-      } else {
-        res.status(200).json({ message: 'Login successful', redirectTo: '/User' });
-      }
+      res.status(200).json({ message: 'Login successful', redirectTo: '/User' });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -55,6 +56,28 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Error logging in' });
   }
 });
+
+app.post('/admin/login', async (req, res) => {
+  const { name, password } = req.body;
+  try {
+    const hardcodedAdmin = {
+      name: 'admin@email.com',
+      password: 'Admin@123'
+    };
+
+    if (name === hardcodedAdmin.name && password === hardcodedAdmin.password) {
+      res.status(200).json({ message: 'Login successful', redirectTo: '/Admin' });
+    } else {
+      console.log(`Invalid credentials: Name - ${name}, Password - ${password}`);
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  } catch (err) {
+    console.error('Error during admin login:', err);
+    res.status(500).json({ error: 'Error logging in' });
+  }
+});
+
+
 app.get('/graph/monthly-counts', async (req, res) => {
   try {
     const results = await User.aggregate([
@@ -72,7 +95,6 @@ app.get('/graph/monthly-counts', async (req, res) => {
       }
     ]);
 
-    // Format the results
     const formattedResults = results.map(result => ({
       month: `${result._id.year}-${result._id.month.toString().padStart(2, '0')}`,
       count: result.count

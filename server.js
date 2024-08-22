@@ -80,31 +80,43 @@ app.post('/admin/login', async (req, res) => {
 
 app.get('/graph/monthly-counts', async (req, res) => {
   try {
+    const year = new Date().getFullYear();
     const results = await User.aggregate([
       {
+        $match: {
+          lastLogin: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`)
+          }
+        }
+      },
+      {
         $group: {
-          _id: {
-            year: { $year: "$lastLogin" },
-            month: { $month: "$lastLogin" }
-          },
+          _id: { month: { $month: "$lastLogin" } },
           count: { $sum: 1 }
         }
       },
       {
-        $sort: { "_id.year": 1, "_id.month": 1 }
+        $sort: { "_id.month": 1 }
       }
     ]);
 
-    const formattedResults = results.map(result => ({
-      month: `${result._id.year}-${result._id.month.toString().padStart(2, '0')}`,
-      count: result.count
+    const allMonths = Array.from({ length: 12 }, (_, i) => ({
+      month: `${year}-${(i + 1).toString().padStart(2, '0')}`,
+      count: 0
     }));
 
-    res.status(200).json(formattedResults);
+    results.forEach(result => {
+      const monthIndex = result._id.month - 1;
+      allMonths[monthIndex].count = result.count;
+    });
+
+    res.status(200).json(allMonths);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching monthly counts' });
   }
 });
+
 
 app.get('/admin/users', async (req, res) => {
   try {

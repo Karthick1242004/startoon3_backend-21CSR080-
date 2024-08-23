@@ -13,13 +13,15 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-  loginCount: { type: Number, default: 0 },
-  lastLogin: { type: Date, default: null }
-}, { collection: 'users' });
+  const userSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+    password: String,
+    gender: String, 
+    loginCount: { type: Number, default: 0 },
+    lastLogin: { type: Date, default: null }
+  }, { collection: 'users' });
+  
 
 const adminSchema = new mongoose.Schema({
   name: String,
@@ -30,15 +32,16 @@ const User = mongoose.model('User', userSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 
 app.post('/signup', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, gender } = req.body; 
   try {
-    const newUser = new User({ name, email, password });
+    const newUser = new User({ name, email, password, gender });
     await newUser.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Error registering user' });
   }
 });
+
 
 app.post('/login', async (req, res) => {
   const { name, password } = req.body;
@@ -120,7 +123,7 @@ app.get('/graph/monthly-counts', async (req, res) => {
 
 app.get('/admin/users', async (req, res) => {
   try {
-    const users = await User.find({}, 'name email loginCount lastLogin');
+    const users = await User.find({}, 'name email gender loginCount lastLogin'); 
     res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching users' });
